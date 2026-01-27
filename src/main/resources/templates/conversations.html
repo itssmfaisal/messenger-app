@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversations - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Messenger</h2>
+                <div class="user-info">
+                    <span th:text="${username}">User</span>
+                    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <a th:href="@{/users}" class="btn btn-secondary">New Conversation</a>
+            </div>
+            
+            <div class="conversations-list">
+                <h3>Conversations</h3>
+                <div th:if="${conversations.isEmpty()}" class="empty-state">
+                    <p>No conversations yet. Start a new one!</p>
+                </div>
+                <div th:each="conversation : ${conversations}" class="conversation-item">
+                    <a th:href="@{/conversation/{id}(id=${conversation.id})}" class="conversation-link">
+                        <div class="conversation-name" th:text="${conversationService.getConversationDisplayName(conversation, currentUserId)}"></div>
+                        <div class="conversation-meta">
+                            <span class="unread-count" 
+                                  th:if="${messageService.getUnreadCount(conversation.id, currentUserId) > 0}"
+                                  th:text="${messageService.getUnreadCount(conversation.id, currentUserId)}"></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="welcome-message">
+                <h1>Welcome to Messenger</h1>
+                <p>Select a conversation or start a new one to begin chatting.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h1>Messenger</h1>
+            <h2>Register</h2>
+            
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+            
+            <form th:action="@{/register}" th:object="${user}" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" th:field="*{username}" required autofocus>
+                    <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}" required>
+                    <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fullName">Full Name (Optional)</label>
+                    <input type="text" id="fullName" th:field="*{fullName}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" th:field="*{password}" required>
+                    <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error"></span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            
+            <p class="auth-link">
+                Already have an account? <a th:href="@{/login}">Login here</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

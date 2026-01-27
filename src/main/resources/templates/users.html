@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Messenger</h2>
+                <div class="user-info">
+                    <span th:text="${username}">User</span>
+                    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <a th:href="@{/conversations}" class="btn btn-secondary">Back to Conversations</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="users-header">
+                <h2>Start a New Conversation</h2>
+                <form method="get" th:action="@{/users}" class="search-form">
+                    <input type="text" name="search" placeholder="Search users..." th:value="${search}">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+            
+            <div class="users-list">
+                <div th:if="${users.isEmpty()}" class="empty-state">
+                    <p>No users found.</p>
+                </div>
+                <div th:each="user : ${users}" class="user-item">
+                    <div class="user-info">
+                        <div class="user-avatar" th:text="${user.username.substring(0, 1).toUpperCase()}"></div>
+                        <div class="user-details">
+                            <div class="user-name" th:text="${user.username}"></div>
+                            <div class="user-fullname" th:if="${user.fullName}" th:text="${user.fullName}"></div>
+                            <div class="user-status" th:classappend="${user.isOnline ? 'online' : 'offline'}">
+                                <span th:text="${user.isOnline ? 'Online' : 'Offline'}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <form th:action="@{/conversation/create}" method="post" style="display: inline;">
+                        <input type="hidden" name="userId2" th:value="${user.id}">
+                        <button type="submit" class="btn btn-primary">Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

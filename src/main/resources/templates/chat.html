@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${conversationName + ' - Messenger'}">Chat - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Messenger</h2>
+                <div class="user-info">
+                    <span th:text="${username}">User</span>
+                    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <a th:href="@{/users}" class="btn btn-secondary">New Conversation</a>
+            </div>
+            
+            <div class="conversations-list">
+                <h3>Conversations</h3>
+                <a th:href="@{/conversations}" class="back-link">← Back to Conversations</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="chat-header">
+                <h2 th:text="${conversationName}">Conversation</h2>
+                <div class="participants" th:if="${conversation.isGroup}">
+                    <span th:each="participant : ${participants}" 
+                          th:text="${participant.username}" 
+                          class="participant-tag"></span>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div th:each="message : ${messages}" 
+                     class="message" 
+                     th:classappend="${message.sender.id == currentUserId ? 'message-sent' : 'message-received'}">
+                    <div class="message-header">
+                        <span class="message-sender" th:text="${message.sender.username}"></span>
+                        <span class="message-time" th:text="${#temporals.format(message.createdAt, 'HH:mm')}"></span>
+                    </div>
+                    <div class="message-content" th:text="${message.content}"></div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <form id="messageForm" th:action="@{/message/send}" method="post">
+                    <input type="hidden" name="conversationId" th:value="${conversation.id}">
+                    <input type="text" 
+                           id="messageInput" 
+                           name="content" 
+                           placeholder="Type a message..." 
+                           autocomplete="off"
+                           required>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const conversationId = [[${conversation.id}]];
+        const currentUserId = [[${currentUserId}]];
+    </script>
+    <script th:src="@{/js/chat.js}"></script>
+</body>
+</html>
