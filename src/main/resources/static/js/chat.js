@@ -10,6 +10,12 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 3000; // 3 seconds
 
+// Pagination variables
+let currentPage = 0;
+let hasMoreMessages = true;
+let isLoadingMessages = false;
+const PAGE_SIZE = 50;
+
 // Make initialization function available globally
 window.initializeChat = function() {
     // Get conversation ID and user ID from window variables or script tags
@@ -75,8 +81,11 @@ window.initializeChat = function() {
         console.error('Message form not found!');
     }
     
-    // Auto-scroll to bottom on load
-    scrollToBottom();
+    // Load initial messages with pagination
+    loadInitialMessages();
+    
+    // Setup infinite scroll (load more when scrolling to top)
+    setupInfiniteScroll();
     
     // Poll for new messages every 3 seconds (fallback if WebSocket fails)
     setInterval(pollMessages, 3000);
@@ -507,6 +516,122 @@ function displayMessage(message) {
         }
     }
     
+    // Use createMessageElement to build the message
+    const messageDiv = createMessageElement(message);
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+    console.log('Message displayed successfully');
+}
+
+function loadInitialMessages() {
+    if (!conversationId) return;
+    
+    currentPage = 0;
+    hasMoreMessages = true;
+    
+    fetch(`/message/conversation/${conversationId}?page=0&size=${PAGE_SIZE}`)
+        .then(response => response.json())
+        .then(data => {
+            const messages = data.messages || [];
+            hasMoreMessages = data.hasMore || false;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) return;
+            
+            // Clear existing messages (except server-rendered ones)
+            // Actually, we want to keep server-rendered messages and append new ones
+            messages.forEach(message => {
+                displayMessage({
+                    id: message.id,
+                    content: message.content,
+                    senderId: message.senderId,
+                    senderUsername: message.senderUsername,
+                    senderProfilePicture: message.senderProfilePicture,
+                    createdAt: message.createdAt
+                });
+            });
+            
+            // Scroll to bottom after loading
+            setTimeout(scrollToBottom, 100);
+        })
+        .catch(error => {
+            console.error('Error loading initial messages:', error);
+        });
+}
+
+function loadOlderMessages() {
+    if (!conversationId || isLoadingMessages || !hasMoreMessages) {
+        return;
+    }
+    
+    isLoadingMessages = true;
+    const nextPage = currentPage + 1;
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) {
+        isLoadingMessages = false;
+        return;
+    }
+    
+    // Save current scroll position
+    const scrollHeight = messagesContainer.scrollHeight;
+    const scrollTop = messagesContainer.scrollTop;
+    
+    fetch(`/message/conversation/${conversationId}?page=${nextPage}&size=${PAGE_SIZE}`)
+        .then(response => response.json())
+        .then(data => {
+            const messages = data.messages || [];
+            hasMoreMessages = data.hasMore || false;
+            currentPage = nextPage;
+            
+            if (messages.length > 0) {
+                // Get the first message element to insert before
+                const firstMessage = messagesContainer.querySelector('.message');
+                
+                // Insert messages at the top (oldest first)
+                messages.forEach(message => {
+                    const messageDiv = createMessageElement({
+                        id: message.id,
+                        content: message.content,
+                        senderId: message.senderId,
+                        senderUsername: message.senderUsername,
+                        senderProfilePicture: message.senderProfilePicture,
+                        createdAt: message.createdAt
+                    });
+                    
+                    if (firstMessage) {
+                        messagesContainer.insertBefore(messageDiv, firstMessage);
+                    } else {
+                        messagesContainer.appendChild(messageDiv);
+                    }
+                });
+                
+                // Restore scroll position
+                const newScrollHeight = messagesContainer.scrollHeight;
+                messagesContainer.scrollTop = scrollTop + (newScrollHeight - scrollHeight);
+            }
+            
+            isLoadingMessages = false;
+        })
+        .catch(error => {
+            console.error('Error loading older messages:', error);
+            isLoadingMessages = false;
+        });
+}
+
+function setupInfiniteScroll() {
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) return;
+    
+    messagesContainer.addEventListener('scroll', function() {
+        // Load more when user scrolls near the top (within 200px)
+        if (messagesContainer.scrollTop < 200 && hasMoreMessages && !isLoadingMessages) {
+            loadOlderMessages();
+        }
+    });
+}
+
+function createMessageElement(message) {
     const messageDiv = document.createElement('div');
     const isSent = message.senderId === currentUserId;
     messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
@@ -516,15 +641,11 @@ function displayMessage(message) {
     
     let time;
     try {
-        // Handle different date formats
         let dateObj;
         if (message.createdAt) {
             if (typeof message.createdAt === 'string') {
-                // Try parsing ISO string or other formats
                 dateObj = new Date(message.createdAt);
-                // If parsing failed, try to parse as LocalDateTime format
                 if (isNaN(dateObj.getTime())) {
-                    // Try parsing as "2024-01-01T12:00:00" format
                     const dateStr = message.createdAt.replace(' ', 'T');
                     dateObj = new Date(dateStr);
                 }
@@ -581,17 +702,17 @@ function displayMessage(message) {
         </div>
     `;
     
-    messagesContainer.appendChild(messageDiv);
-    scrollToBottom();
-    console.log('Message displayed successfully');
+    return messageDiv;
 }
 
 function pollMessages() {
     if (!conversationId) return;
     
-    fetch(`/message/conversation/${conversationId}`)
+    // Only poll for new messages (page 0, latest)
+    fetch(`/message/conversation/${conversationId}?page=0&size=${PAGE_SIZE}`)
         .then(response => response.json())
-        .then(messages => {
+        .then(data => {
+            const messages = data.messages || [];
             const messagesContainer = document.getElementById('chatMessages');
             if (!messagesContainer) return;
             
@@ -602,6 +723,7 @@ function pollMessages() {
                 })
                 .filter(id => id !== null);
             
+            // Only add messages that don't exist yet (new messages)
             messages.forEach(message => {
                 if (!currentMessageIds.includes(message.id)) {
                     displayMessage({

@@ -79,14 +79,37 @@ public class MessageController {
     
     @GetMapping("/message/conversation/{conversationId}")
     @ResponseBody
-    public ResponseEntity<List<MessageDTO>> getMessages(@PathVariable Long conversationId,
-                                                         HttpSession session) {
+    public ResponseEntity<Map<String, Object>> getMessages(
+            @PathVariable Long conversationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return ResponseEntity.status(401).build();
         }
         
-        List<Message> messages = messageService.getConversationMessages(conversationId);
+        // For initial load (page 0), get latest messages
+        List<Message> messages;
+        boolean hasMore = false;
+        
+        if (page == 0) {
+            // Load latest messages
+            messages = messageService.getLatestMessages(conversationId, size);
+            // Check if there are more messages
+            var pageResult = messageService.getConversationMessagesPaginated(conversationId, 1, size);
+            hasMore = pageResult.hasContent();
+        } else {
+            // Load older messages (pagination)
+            var pageResult = messageService.getConversationMessagesPaginated(conversationId, page, size);
+            messages = pageResult.getContent();
+            // Reverse to get chronological order (oldest first)
+            messages = messages.stream()
+                .sorted((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
+                .collect(Collectors.toList());
+            hasMore = pageResult.hasNext();
+        }
+        
         List<MessageDTO> messageDTOs = messages.stream()
             .map(msg -> new MessageDTO(
                 msg.getId(),
@@ -99,6 +122,11 @@ public class MessageController {
             ))
             .collect(Collectors.toList());
         
-        return ResponseEntity.ok(messageDTOs);
+        Map<String, Object> response = new HashMap<>();
+        response.put("messages", messageDTOs);
+        response.put("hasMore", hasMore);
+        response.put("page", page);
+        
+        return ResponseEntity.ok(response);
     }
 }

@@ -67,7 +67,8 @@ public class ConversationController {
         // Mark messages as read
         messageService.markConversationAsRead(id, userId);
         
-        List<com.messenger.app.model.Message> messages = messageService.getConversationMessages(id);
+        // Load only latest messages for initial display (pagination will load more)
+        List<com.messenger.app.model.Message> messages = messageService.getLatestMessages(id, 50);
         List<User> participants = conversationService.getConversationParticipants(id, userId);
         
         // Check if user is admin
