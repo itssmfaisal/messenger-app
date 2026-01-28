@@ -3,28 +3,60 @@
 let stompClient = null;
 let conversationId = null;
 let currentUserId = null;
+let isSending = false; // Flag to prevent duplicate submissions
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Get conversation ID and user ID from script tag
-    const scriptTag = document.querySelector('script');
-    if (scriptTag && scriptTag.textContent) {
-        const match = scriptTag.textContent.match(/conversationId = (\d+)/);
-        if (match) {
-            conversationId = parseInt(match[1]);
-        }
-        const userIdMatch = scriptTag.textContent.match(/currentUserId = (\d+)/);
-        if (userIdMatch) {
-            currentUserId = parseInt(userIdMatch[1]);
+// Make initialization function available globally
+window.initializeChat = function() {
+    // Get conversation ID and user ID from window variables or script tags
+    if (window.conversationId) {
+        conversationId = window.conversationId;
+    }
+    if (window.currentUserId) {
+        currentUserId = window.currentUserId;
+    }
+    
+    // Fallback: try to get from script tags
+    if (!conversationId || !currentUserId) {
+        const scriptTags = document.querySelectorAll('script');
+        for (let scriptTag of scriptTags) {
+            if (scriptTag.textContent) {
+                const match = scriptTag.textContent.match(/conversationId\s*=\s*(\d+)/);
+                if (match) {
+                    conversationId = parseInt(match[1]);
+                    console.log('Found conversationId from script:', conversationId);
+                }
+                const userIdMatch = scriptTag.textContent.match(/currentUserId\s*=\s*(\d+)/);
+                if (userIdMatch) {
+                    currentUserId = parseInt(userIdMatch[1]);
+                    console.log('Found currentUserId from script:', currentUserId);
+                }
+            }
         }
     }
+    
+    if (!conversationId || !currentUserId) {
+        console.error('Failed to initialize: conversationId =', conversationId, 'currentUserId =', currentUserId);
+        return;
+    }
+    
+    console.log('Chat initialized with conversationId:', conversationId, 'currentUserId:', currentUserId);
     
     // Initialize WebSocket connection
     initializeWebSocket();
     
-    // Setup message form
+    // Setup message form - only use form submit, not button click
     const messageForm = document.getElementById('messageForm');
+    
     if (messageForm) {
-        messageForm.addEventListener('submit', handleMessageSubmit);
+        // Remove any existing listeners by cloning the form
+        const newForm = messageForm.cloneNode(true);
+        messageForm.parentNode.replaceChild(newForm, messageForm);
+        
+        // Add only form submit listener (button click will trigger form submit)
+        document.getElementById('messageForm').addEventListener('submit', handleMessageSubmit);
+        console.log('Message form event listener attached');
+    } else {
+        console.error('Message form not found!');
     }
     
     // Auto-scroll to bottom on load
@@ -32,7 +64,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Poll for new messages every 3 seconds (fallback if WebSocket fails)
     setInterval(pollMessages, 3000);
-});
+};
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeChat);
+} else {
+    // DOM is already loaded
+    window.initializeChat();
+}
 
 function initializeWebSocket() {
     // Load SockJS and STOMP from CDN if not already loaded
@@ -77,79 +117,162 @@ function connectWebSocket() {
 }
 
 function handleMessageSubmit(e) {
-    e.preventDefault();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     
-    const form = e.target;
+    // Prevent duplicate submissions
+    if (isSending) {
+        console.log('Message already being sent, ignoring duplicate submission');
+        return false;
+    }
+    
+    console.log('handleMessageSubmit called');
+    
+    const form = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
+    
+    if (!messageInput) {
+        console.error('Message input not found!');
+        return false;
+    }
+    
     const content = messageInput.value.trim();
     
     if (!content) {
-        return;
+        console.log('Empty message, ignoring');
+        return false;
     }
+    
+    if (!conversationId || !currentUserId) {
+        console.error('Missing conversationId or currentUserId', {conversationId, currentUserId});
+        alert('Error: Missing conversation or user information. Please refresh the page.');
+        return false;
+    }
+    
+    // Set sending flag
+    isSending = true;
     
     // Disable form while sending
-    form.querySelector('button').disabled = true;
+    const submitButton = form ? form.querySelector('button[type="submit"]') : document.querySelector('#messageForm button[type="submit"]');
+    const originalButtonText = submitButton ? submitButton.textContent : 'Send';
     
-    // Try to send via WebSocket first
-    if (stompClient && stompClient.connected) {
-        const chatMessage = {
-            content: content,
-            senderId: currentUserId,
-            conversationId: conversationId
-        };
-        
-        stompClient.send('/app/chat/' + conversationId, {}, JSON.stringify(chatMessage));
-        messageInput.value = '';
-        form.querySelector('button').disabled = false;
-        messageInput.focus();
-    } else {
-        // Fallback to HTTP POST
-        const formData = new FormData(form);
-        fetch('/message/send', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error('Error sending message:', data.error);
-            } else {
-                messageInput.value = '';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        })
-        .finally(() => {
-            form.querySelector('button').disabled = false;
-            messageInput.focus();
-        });
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending...';
     }
+    
+    console.log('Sending message:', {content, conversationId, currentUserId});
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('conversationId', conversationId);
+    formData.append('content', content);
+    
+    // Send via HTTP POST
+    fetch('/message/send', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status, response.statusText);
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Network response was not ok');
+            }).catch(() => {
+                throw new Error('Network response was not ok: ' + response.status);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Message sent successfully:', data);
+        if (data.error) {
+            console.error('Error sending message:', data.error);
+            alert('Error sending message: ' + data.error);
+        } else {
+            // Display the message immediately
+            displayMessage({
+                id: data.id,
+                content: data.content,
+                senderId: data.senderId,
+                senderUsername: data.senderUsername,
+                createdAt: data.createdAt
+            });
+            messageInput.value = '';
+            console.log('Message displayed and input cleared');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        alert('Error sending message: ' + (error.message || error));
+    })
+    .finally(() => {
+        // Reset sending flag
+        isSending = false;
+        
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+        if (messageInput) {
+            messageInput.focus();
+        }
+    });
+    
+    return false;
 }
 
 function displayMessage(message) {
+    console.log('Displaying message:', message);
     const messagesContainer = document.getElementById('chatMessages');
-    if (!messagesContainer) return;
+    if (!messagesContainer) {
+        console.error('Messages container not found!');
+        return;
+    }
+    
+    // Check if message already exists to avoid duplicates
+    if (message.id) {
+        const existingMessage = messagesContainer.querySelector(`[data-message-id="${message.id}"]`);
+        if (existingMessage) {
+            console.log('Message already displayed, skipping:', message.id);
+            return; // Message already displayed
+        }
+    }
     
     const messageDiv = document.createElement('div');
     const isSent = message.senderId === currentUserId;
     messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+    if (message.id) {
+        messageDiv.setAttribute('data-message-id', message.id);
+    }
     
-    const time = new Date(message.createdAt).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    let time;
+    try {
+        time = new Date(message.createdAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        console.error('Error parsing date:', message.createdAt, e);
+        time = new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
     
     messageDiv.innerHTML = `
         <div class="message-header">
-            <span class="message-sender">${escapeHtml(message.senderUsername)}</span>
+            <span class="message-sender">${escapeHtml(message.senderUsername || 'Unknown')}</span>
             <span class="message-time">${time}</span>
         </div>
-        <div class="message-content">${escapeHtml(message.content)}</div>
+        <div class="message-content">${escapeHtml(message.content || '')}</div>
     `;
     
     messagesContainer.appendChild(messageDiv);
     scrollToBottom();
+    console.log('Message displayed successfully');
 }
 
 function pollMessages() {
@@ -163,7 +286,7 @@ function pollMessages() {
             
             const currentMessageIds = Array.from(messagesContainer.querySelectorAll('.message'))
                 .map(msg => {
-                    const id = msg.dataset.messageId;
+                    const id = msg.getAttribute('data-message-id');
                     return id ? parseInt(id) : null;
                 })
                 .filter(id => id !== null);

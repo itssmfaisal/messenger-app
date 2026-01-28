@@ -40,7 +40,8 @@
             <div class="chat-messages" id="chatMessages">
                 <div th:each="message : ${messages}" 
                      class="message" 
-                     th:classappend="${message.sender.id == currentUserId ? 'message-sent' : 'message-received'}">
+                     th:classappend="${message.sender.id == currentUserId ? 'message-sent' : 'message-received'}"
+                     th:attr="data-message-id=${message.id}">
                     <div class="message-header">
                         <span class="message-sender" th:text="${message.sender.username}"></span>
                         <span class="message-time" th:text="${#temporals.format(message.createdAt, 'HH:mm')}"></span>
@@ -50,7 +51,7 @@
             </div>
             
             <div class="chat-input-container">
-                <form id="messageForm" th:action="@{/message/send}" method="post">
+                <form id="messageForm" method="post">
                     <input type="hidden" name="conversationId" th:value="${conversation.id}">
                     <input type="text" 
                            id="messageInput" 
@@ -64,10 +65,17 @@
         </div>
     </div>
     
-    <script>
-        const conversationId = [[${conversation.id}]];
-        const currentUserId = [[${currentUserId}]];
-    </script>
     <script th:src="@{/js/chat.js}"></script>
+    <script>
+        // Initialize variables from server-side data (after chat.js loads)
+        window.conversationId = [[${conversation.id}]];
+        window.currentUserId = [[${currentUserId}]];
+        console.log('Initialized from template - conversationId:', window.conversationId, 'currentUserId:', window.currentUserId);
+        
+        // Re-initialize if chat.js already loaded
+        if (typeof initializeChat === 'function') {
+            initializeChat();
+        }
+    </script>
 </body>
 </html>
