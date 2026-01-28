@@ -66,4 +66,8 @@ public class MessageService {
     public Long getUnreadCount(Long conversationId, Long userId) {
         return messageRepository.countUnreadMessages(conversationId, userId);
     }
+    
+    public long getTotalMessageCount() {
+        return messageRepository.count();
+    }
 }

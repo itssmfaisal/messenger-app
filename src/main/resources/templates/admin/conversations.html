@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Conversations - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .admin-nav {
+            background: #343a40;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .admin-nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .admin-nav a:hover, .admin-nav a.active {
+            background: #495057;
+        }
+        .conversations-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .conversations-table th, .conversations-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .conversations-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-group {
+            background: #17a2b8;
+            color: white;
+        }
+        .badge-direct {
+            background: #6c757d;
+            color: white;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Messenger</h2>
+                <div class="user-info">
+                    <span th:text="${username}">Admin</span>
+                    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <a th:href="@{/conversations}" class="btn btn-secondary">← Back to App</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="admin-nav">
+                <a th:href="@{/admin}">Dashboard</a>
+                <a th:href="@{/admin/users}">Users</a>
+                <a th:href="@{/admin/conversations}" class="active">Conversations</a>
+            </div>
+            
+            <h1>Conversation Management</h1>
+            
+            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+            
+            <table class="conversations-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="conversation : ${conversations}">
+                        <td th:text="${conversation.id}"></td>
+                        <td th:text="${conversation.conversationName}"></td>
+                        <td>
+                            <span class="badge" th:classappend="${conversation.isGroup ? 'badge-group' : 'badge-direct'}"
+                                  th:text="${conversation.isGroup ? 'Group' : 'Direct'}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(conversation.getCreatedAt(), 'yyyy-MM-dd HH:mm')}"></td>
+                        <td th:text="${conversation.updatedAt != null ? #temporals.format(conversation.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A'}"></td>
+                        <td>
+                            <a th:href="@{/admin/conversations/{id}/messages(id=${conversation.id})}" class="btn btn-primary" style="padding: 4px 8px; font-size: 12px; text-decoration: none;">View Messages</a>
+                            <form th:action="@{/admin/conversations/{id}/delete(id=${conversation.id})}" method="post" style="display: inline;" 
+                                  onsubmit="return confirm('Are you sure you want to delete this conversation? This action cannot be undone.');">
+                                <button type="submit" class="btn" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 12px;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

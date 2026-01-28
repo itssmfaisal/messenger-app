@@ -53,6 +53,10 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
     
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+    
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
@@ -66,5 +70,9 @@ public class UserService {
     
     public User updateUser(User user) {
         return userRepository.save(user);
+    }
+    
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
     }
 }

@@ -2,26 +2,26 @@ package com.messenger.app.dto;
 
 import java.time.LocalDateTime;
 
-public class ChatMessage {
+public class MessageDTO {
     private Long id;
     private String content;
     private Long senderId;
     private String senderUsername;
     private String senderProfilePicture;
-    private Long conversationId;
     private LocalDateTime createdAt;
+    private Boolean isRead;
     
-    public ChatMessage() {}
+    public MessageDTO() {}
     
-    public ChatMessage(Long id, String content, Long senderId, String senderUsername, 
-                      String senderProfilePicture, Long conversationId, LocalDateTime createdAt) {
+    public MessageDTO(Long id, String content, Long senderId, String senderUsername, 
+                     String senderProfilePicture, LocalDateTime createdAt, Boolean isRead) {
         this.id = id;
         this.content = content;
         this.senderId = senderId;
         this.senderUsername = senderUsername;
         this.senderProfilePicture = senderProfilePicture;
-        this.conversationId = conversationId;
         this.createdAt = createdAt;
+        this.isRead = isRead;
     }
     
     // Getters and Setters
@@ -57,20 +57,20 @@ public class ChatMessage {
         this.senderUsername = senderUsername;
     }
     
-    public Long getConversationId() {
-        return conversationId;
-    }
-    
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
-    }
-    
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public Boolean getIsRead() {
+        return isRead;
+    }
+    
+    public void setIsRead(Boolean isRead) {
+        this.isRead = isRead;
     }
     
     public String getSenderProfilePicture() {
@@ -81,3 +81,4 @@ public class ChatMessage {
         this.senderProfilePicture = senderProfilePicture;
     }
 }
+

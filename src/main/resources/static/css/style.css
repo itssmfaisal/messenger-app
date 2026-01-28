@@ -302,14 +302,52 @@ body {
 .message {
     margin-bottom: 1rem;
     max-width: 70%;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
 }
 
 .message-sent {
     margin-left: auto;
+    flex-direction: row-reverse;
+}
+
+.message-sent .message-avatar {
+    display: none;
 }
 
 .message-received {
     margin-right: auto;
+}
+
+.message-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.message-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .message-header {

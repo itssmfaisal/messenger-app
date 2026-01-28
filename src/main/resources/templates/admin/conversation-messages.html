@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Conversation Messages - Messenger</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .admin-nav {
+            background: #343a40;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .admin-nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .admin-nav a:hover {
+            background: #495057;
+        }
+        .messages-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .message-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .message-content {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Messenger</h2>
+                <div class="user-info">
+                    <span th:text="${username}">Admin</span>
+                    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <a th:href="@{/admin/conversations}" class="btn btn-secondary">← Back to Conversations</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="admin-nav">
+                <a th:href="@{/admin}">Dashboard</a>
+                <a th:href="@{/admin/users}">Users</a>
+                <a th:href="@{/admin/conversations}">Conversations</a>
+            </div>
+            
+            <h1>Conversation Messages</h1>
+            <p><strong>Conversation:</strong> <span th:text="${conversation.conversationName}"></span></p>
+            <p><strong>Type:</strong> <span th:text="${conversation.isGroup ? 'Group' : 'Direct'}"></span></p>
+            <p><strong>Total Messages:</strong> <span th:text="${messages.size()}"></span></p>
+            
+            <div class="messages-container">
+                <div th:if="${messages.isEmpty()}" class="empty-state">
+                    <p>No messages in this conversation.</p>
+                </div>
+                <div th:each="message : ${messages}" class="message-item">
+                    <div class="message-header">
+                        <span><strong th:text="${message.sender.username}"></strong></span>
+                        <span th:text="${#temporals.format(message.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
+                    </div>
+                    <div class="message-content" th:text="${message.content}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

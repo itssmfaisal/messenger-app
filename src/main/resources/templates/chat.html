@@ -19,6 +19,8 @@
             
             <div class="sidebar-actions">
                 <a th:href="@{/users}" class="btn btn-secondary">New Conversation</a>
+                <a th:href="@{/profile}" class="btn" style="background: #17a2b8; color: white; margin-top: 10px;">My Profile</a>
+                <a th:if="${isAdmin}" th:href="@{/admin}" class="btn" style="background: #28a745; color: white; margin-top: 10px;">Admin Panel</a>
             </div>
             
             <div class="conversations-list">
@@ -29,7 +31,14 @@
         
         <div class="main-content">
             <div class="chat-header">
-                <h2 th:text="${conversationName}">Conversation</h2>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a th:href="@{/conversations}" class="btn btn-secondary" style="text-decoration: none; padding: 8px 15px; font-size: 14px;">← Back</a>
+                    <h2 style="margin: 0;" th:text="${conversationName}">Conversation</h2>
+                </div>
+                <div id="connectionStatus" style="font-size: 12px; color: #666; margin-top: 5px;">
+                    <span id="statusIndicator" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #ccc; margin-right: 5px;"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
                 <div class="participants" th:if="${conversation.isGroup}">
                     <span th:each="participant : ${participants}" 
                           th:text="${participant.username}" 
@@ -42,11 +51,24 @@
                      class="message" 
                      th:classappend="${message.sender.id == currentUserId ? 'message-sent' : 'message-received'}"
                      th:attr="data-message-id=${message.id}">
-                    <div class="message-header">
-                        <span class="message-sender" th:text="${message.sender.username}"></span>
-                        <span class="message-time" th:text="${#temporals.format(message.createdAt, 'HH:mm')}"></span>
+                    <div class="message-avatar" th:if="${message.sender.id != currentUserId}">
+                        <div th:if="${message.sender.profilePicture != null and !message.sender.profilePicture.isEmpty()}" 
+                             class="avatar-img">
+                            <img th:src="@{'/uploads/profile-pictures/' + ${message.sender.profilePicture}}" 
+                                 alt="Profile Picture" 
+                                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <div th:unless="${message.sender.profilePicture != null and !message.sender.profilePicture.isEmpty()}" 
+                             class="avatar-placeholder"
+                             th:text="${message.sender.username.substring(0, 1).toUpperCase()}"></div>
                     </div>
-                    <div class="message-content" th:text="${message.content}"></div>
+                    <div class="message-body">
+                        <div class="message-header">
+                            <span class="message-sender" th:text="${message.sender.username}"></span>
+                            <span class="message-time" th:text="${#temporals.format(message.createdAt, 'HH:mm')}"></span>
+                        </div>
+                        <div class="message-content" th:text="${message.content}"></div>
+                    </div>
                 </div>
             </div>
             
@@ -65,17 +87,12 @@
         </div>
     </div>
     
-    <script th:src="@{/js/chat.js}"></script>
     <script>
-        // Initialize variables from server-side data (after chat.js loads)
+        // Initialize variables from server-side data BEFORE loading chat.js
         window.conversationId = [[${conversation.id}]];
         window.currentUserId = [[${currentUserId}]];
         console.log('Initialized from template - conversationId:', window.conversationId, 'currentUserId:', window.currentUserId);
-        
-        // Re-initialize if chat.js already loaded
-        if (typeof initializeChat === 'function') {
-            initializeChat();
-        }
     </script>
+    <script th:src="@{/js/chat.js}"></script>
 </body>
 </html>

@@ -97,4 +97,12 @@ public class ConversationService {
                 participantRepository.save(participant);
             });
     }
+    
+    public List<Conversation> findAllConversations() {
+        return conversationRepository.findAll();
+    }
+    
+    public void deleteConversation(Long conversationId) {
+        conversationRepository.deleteById(conversationId);
+    }
 }

@@ -1,5 +1,6 @@
 package com.messenger.app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -46,10 +47,14 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column(name = "is_admin")
+    private Boolean isAdmin = false;
+    
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Participant> participants = new HashSet<>();
     
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Message> messages = new HashSet<>();
     
     @PrePersist
@@ -138,6 +143,14 @@ public class User {
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public Boolean getIsAdmin() {
+        return isAdmin != null ? isAdmin : false;
+    }
+    
+    public void setIsAdmin(Boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
     
     public Set<Participant> getParticipants() {

@@ -35,11 +35,18 @@ public class ConversationController {
         
         String username = (String) session.getAttribute("username");
         List<Conversation> conversations = conversationService.getUserConversations(userId);
+        
+        // Check if user is admin
+        boolean isAdmin = userService.findById(userId)
+            .map(user -> user.getIsAdmin() != null && user.getIsAdmin())
+            .orElse(false);
+        
         model.addAttribute("conversations", conversations);
         model.addAttribute("currentUserId", userId);
         model.addAttribute("username", username);
         model.addAttribute("conversationService", conversationService);
         model.addAttribute("messageService", messageService);
+        model.addAttribute("isAdmin", isAdmin);
         
         return "conversations";
     }
@@ -63,12 +70,18 @@ public class ConversationController {
         List<com.messenger.app.model.Message> messages = messageService.getConversationMessages(id);
         List<User> participants = conversationService.getConversationParticipants(id, userId);
         
+        // Check if user is admin
+        boolean isAdmin = userService.findById(userId)
+            .map(user -> user.getIsAdmin() != null && user.getIsAdmin())
+            .orElse(false);
+        
         model.addAttribute("conversation", conversation);
         model.addAttribute("messages", messages);
         model.addAttribute("participants", participants);
         model.addAttribute("currentUserId", userId);
         model.addAttribute("username", username);
         model.addAttribute("conversationName", conversationService.getConversationDisplayName(conversation, userId));
+        model.addAttribute("isAdmin", isAdmin);
         
         return "chat";
     }
@@ -106,9 +119,15 @@ public class ConversationController {
             .filter(u -> !u.getId().equals(userId))
             .toList();
         
+        // Check if user is admin
+        boolean isAdmin = userService.findById(userId)
+            .map(user -> user.getIsAdmin() != null && user.getIsAdmin())
+            .orElse(false);
+        
         model.addAttribute("users", users);
         model.addAttribute("currentUserId", userId);
         model.addAttribute("username", username);
+        model.addAttribute("isAdmin", isAdmin);
         
         return "users";
     }

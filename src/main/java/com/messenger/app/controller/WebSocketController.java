@@ -32,6 +32,7 @@ public class WebSocketController {
             message.getContent(),
             message.getSender().getId(),
             message.getSender().getUsername(),
+            message.getSender().getProfilePicture(),
             conversationId,
             message.getCreatedAt()
         );

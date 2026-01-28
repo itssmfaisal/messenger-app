@@ -19,6 +19,8 @@
             
             <div class="sidebar-actions">
                 <a th:href="@{/users}" class="btn btn-secondary">New Conversation</a>
+                <a th:href="@{/profile}" class="btn" style="background: #17a2b8; color: white; margin-top: 10px;">My Profile</a>
+                <a th:if="${isAdmin}" th:href="@{/admin}" class="btn" style="background: #28a745; color: white; margin-top: 10px;">Admin Panel</a>
             </div>
             
             <div class="conversations-list">

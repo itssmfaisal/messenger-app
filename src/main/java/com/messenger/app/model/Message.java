@@ -1,5 +1,6 @@
 package com.messenger.app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class Message {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
+    @JsonIgnore
     private Conversation conversation;
     
     @Column(name = "is_read")
