@@ -31,7 +31,7 @@ public class ImageService {
                 Files.createDirectories(uploadPath);
             }
         } catch (IOException e) {
-            System.err.println("Failed to create upload directory: " + e.getMessage());
+            // Failed to create upload directory
         }
     }
     
@@ -172,7 +172,6 @@ public class ImageService {
             Path filePath = Paths.get(UPLOAD_DIR, filename);
             return Files.deleteIfExists(filePath);
         } catch (IOException e) {
-            System.err.println("Failed to delete image: " + e.getMessage());
             return false;
         }
     }

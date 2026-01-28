@@ -378,6 +378,26 @@ body {
     color: white;
 }
 
+.message-status {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    text-align: right;
+    padding-right: 0.5rem;
+}
+
+.message-received .message-status {
+    display: none;
+}
+
+.seen-indicator {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.sent-indicator {
+    color: #999;
+}
+
 .chat-input-container {
     padding: 1rem 1.5rem;
     border-top: 1px solid #e0e0e0;

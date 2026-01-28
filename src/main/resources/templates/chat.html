@@ -68,6 +68,10 @@
                             <span class="message-time" th:text="${#temporals.format(message.createdAt, 'HH:mm')}"></span>
                         </div>
                         <div class="message-content" th:text="${message.content}"></div>
+                        <div class="message-status" th:if="${message.sender.id == currentUserId}">
+                            <span class="seen-indicator" th:if="${message.isRead}" th:text="'Seen'"></span>
+                            <span class="sent-indicator" th:unless="${message.isRead}" th:text="'Sent'"></span>
+                        </div>
                     </div>
                 </div>
             </div>

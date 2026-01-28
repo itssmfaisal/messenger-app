@@ -82,6 +82,12 @@ public class MessageService {
             });
     }
     
+    public List<Message> getUnreadMessages(Long conversationId, Long userId) {
+        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId).stream()
+            .filter(m -> !m.getSender().getId().equals(userId) && !m.getIsRead())
+            .collect(Collectors.toList());
+    }
+    
     public Long getUnreadCount(Long conversationId, Long userId) {
         return messageRepository.countUnreadMessages(conversationId, userId);
     }

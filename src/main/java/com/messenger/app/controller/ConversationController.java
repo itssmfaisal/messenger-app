@@ -64,8 +64,7 @@ public class ConversationController {
         Conversation conversation = conversationService.findById(id)
             .orElseThrow(() -> new RuntimeException("Conversation not found"));
         
-        // Mark messages as read
-        messageService.markConversationAsRead(id, userId);
+        // Mark messages as read (read receipts will be broadcast when user loads messages)
         
         // Load only latest messages for initial display (pagination will load more)
         List<com.messenger.app.model.Message> messages = messageService.getLatestMessages(id, 50);

@@ -2,6 +2,7 @@ package com.messenger.app.controller;
 
 import com.messenger.app.dto.ChatMessage;
 import com.messenger.app.dto.MessageDTO;
+import com.messenger.app.dto.ReadReceipt;
 import com.messenger.app.model.Message;
 import com.messenger.app.service.MessageService;
 import jakarta.servlet.http.HttpSession;
@@ -44,6 +45,8 @@ public class MessageController {
         response.put("content", message.getContent());
         response.put("senderId", message.getSender().getId());
         response.put("senderUsername", message.getSender().getUsername());
+        response.put("senderProfilePicture", message.getSender().getProfilePicture());
+        response.put("isRead", message.getIsRead());
         response.put("createdAt", message.getCreatedAt().toString());
         
         // Broadcast message via WebSocket to all subscribers
@@ -57,22 +60,7 @@ public class MessageController {
             message.getCreatedAt()
         );
         String destination = "/topic/conversation/" + conversationId;
-        System.out.println("=== Broadcasting Message ===");
-        System.out.println("Destination: " + destination);
-        System.out.println("Message ID: " + chatMessage.getId());
-        System.out.println("Message content: " + chatMessage.getContent());
-        System.out.println("Sender ID: " + chatMessage.getSenderId());
-        System.out.println("Sender Username: " + chatMessage.getSenderUsername());
-        System.out.println("Conversation ID: " + chatMessage.getConversationId());
-        System.out.println("Created At: " + chatMessage.getCreatedAt());
-        try {
-            messagingTemplate.convertAndSend(destination, chatMessage);
-            System.out.println("✓ Message broadcasted successfully");
-        } catch (Exception e) {
-            System.err.println("✗ Error broadcasting message: " + e.getMessage());
-            e.printStackTrace();
-        }
-        System.out.println("============================");
+        messagingTemplate.convertAndSend(destination, chatMessage);
         
         return ResponseEntity.ok(response);
     }
@@ -126,6 +114,44 @@ public class MessageController {
         response.put("messages", messageDTOs);
         response.put("hasMore", hasMore);
         response.put("page", page);
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/message/mark-read")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> markMessagesAsRead(
+            @RequestParam Long conversationId,
+            HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Not authenticated");
+            return ResponseEntity.status(401).body(error);
+        }
+        
+        // Get unread messages before marking as read
+        List<Message> unreadMessages = messageService.getUnreadMessages(conversationId, userId);
+        
+        // Mark all unread messages in the conversation as read
+        messageService.markConversationAsRead(conversationId, userId);
+        
+        // Broadcast read receipts for all messages that were just marked as read
+        String destination = "/topic/read-receipt/" + conversationId;
+        for (Message message : unreadMessages) {
+            ReadReceipt receipt = new ReadReceipt(
+                message.getId(),
+                conversationId,
+                message.getSender().getId(),
+                userId,
+                true
+            );
+            messagingTemplate.convertAndSend(destination, receipt);
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("markedCount", unreadMessages.size());
         
         return ResponseEntity.ok(response);
     }
