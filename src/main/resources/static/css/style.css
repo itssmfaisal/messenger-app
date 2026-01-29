@@ -307,6 +307,13 @@ body {
     align-items: flex-start;
 }
 
+/* Limit message width on desktop for better readability */
+@media (min-width: 768px) {
+    .message {
+        max-width: 500px;
+    }
+}
+
 .message-sent {
     margin-left: auto;
     flex-direction: row-reverse;

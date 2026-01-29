@@ -136,9 +136,12 @@ public class MessageController {
         // Mark all unread messages in the conversation as read
         messageService.markConversationAsRead(conversationId, userId);
         
-        // Broadcast read receipts for all messages that were just marked as read
+        // Get all read messages from other users (to notify their senders)
+        List<Message> allReadMessages = messageService.getReadMessagesFromOthers(conversationId, userId);
+        
+        // Broadcast read receipts for all read messages (so senders know their messages are read)
         String destination = "/topic/read-receipt/" + conversationId;
-        for (Message message : unreadMessages) {
+        for (Message message : allReadMessages) {
             ReadReceipt receipt = new ReadReceipt(
                 message.getId(),
                 conversationId,

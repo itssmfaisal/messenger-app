@@ -173,7 +173,10 @@ function connectWebSocket() {
                         displayMessage(chatMessage);
                         
                         if (chatMessage.senderId !== currentUserId) {
-                            setTimeout(markMessagesAsRead, 500);
+                            setTimeout(function() {
+                                markMessagesAsRead();
+                                setTimeout(updateAllSentMessagesStatus, 300);
+                            }, 500);
                         }
                     } catch (e) {
                         console.error('Error parsing WebSocket message:', e);
@@ -187,10 +190,15 @@ function connectWebSocket() {
                         if (readReceipt.senderId === currentUserId) {
                             updateMessageReadStatus(readReceipt.messageId, readReceipt.isRead);
                         }
+                        // Also refresh all sent messages status to ensure consistency
+                        setTimeout(updateAllSentMessagesStatus, 200);
                     } catch (e) {
                         console.error('Error parsing read receipt:', e);
                     }
                 });
+                
+                // Update all sent messages status when connection is established
+                setTimeout(updateAllSentMessagesStatus, 1000);
                 
                 if (wsSubscription) {
                     updateConnectionStatus('connected', 'Connected');
@@ -694,6 +702,7 @@ function pollMessages() {
             });
             
             markMessagesAsRead();
+            setTimeout(updateAllSentMessagesStatus, 500);
         })
         .catch(error => {
             console.error('Error polling messages:', error);
