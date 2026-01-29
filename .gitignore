@@ -32,3 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 app.log
+
+### Custom ###
+uploads/
+app.jar
+
+
