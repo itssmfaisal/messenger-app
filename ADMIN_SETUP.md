@@ -1,6 +1,6 @@
 # Admin Panel Setup Guide
 
-## Features Addedd
+## Features Added
 
 ### 1. Back Button
 - Added a prominent "← Back" button in the chat header
