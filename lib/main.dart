@@ -29,7 +29,10 @@ class MyApp extends StatelessWidget {
           update: (context, authProvider, messagesProvider) {
             if (authProvider.isAuthenticated && messagesProvider != null) {
               if (messagesProvider.webSocketService == null) {
-                messagesProvider.initWebSocket(authProvider.token!);
+                messagesProvider.initWebSocket(
+                  authProvider.token!,
+                  authProvider.currentUsername!,
+                );
               }
             }
             return messagesProvider ?? MessagesProvider(apiService: apiService);

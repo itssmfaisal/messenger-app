@@ -132,6 +132,7 @@ class AuthProvider extends ChangeNotifier {
 class MessagesProvider extends ChangeNotifier {
   final ApiService apiService;
   WebSocketService? webSocketService;
+  String? _currentUsername;
 
   List<Conversation> _conversations = [];
   Map<String, List<Message>> _conversationMessages = {};
@@ -145,15 +146,20 @@ class MessagesProvider extends ChangeNotifier {
 
   MessagesProvider({required this.apiService});
 
-  void initWebSocket(String token) {
+  void initWebSocket(String token, String currentUsername) {
+    _currentUsername = currentUsername;
     webSocketService = WebSocketService(token: token);
     webSocketService?.onMessage((message) {
       _allMessages[message.id] = message;
-      if (!_conversationMessages.containsKey(message.sender)) {
-        _conversationMessages[message.sender] = [];
+      final partner = message.sender == _currentUsername
+          ? message.recipient
+          : message.sender;
+
+      if (!_conversationMessages.containsKey(partner)) {
+        _conversationMessages[partner] = [];
       }
-      if (!_conversationMessages[message.sender]!.any((m) => m.id == message.id)) {
-        _conversationMessages[message.sender]!.insert(0, message);
+      if (!_conversationMessages[partner]!.any((m) => m.id == message.id)) {
+        _conversationMessages[partner]!.insert(0, message);
       }
       notifyListeners();
     });
@@ -232,12 +238,16 @@ class MessagesProvider extends ChangeNotifier {
     return _conversationMessages[withUser] ?? [];
   }
 
-  void sendMessage(String recipient, String content,
+  Future<void> sendMessage(String recipient, String content,
       {String? attachmentUrl,
       String? attachmentName,
       String? attachmentType,
-      int? attachmentSize}) {
-    if (webSocketService?.isConnected ?? false) {
+      int? attachmentSize}) async {
+    try {
+      if (!(webSocketService?.isConnected ?? false)) {
+        throw Exception('Not connected to chat server. Please reconnect and try again.');
+      }
+
       webSocketService?.sendMessage(
         recipient,
         content,
@@ -246,6 +256,13 @@ class MessagesProvider extends ChangeNotifier {
         attachmentType: attachmentType,
         attachmentSize: attachmentSize,
       );
+
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to send message: $e';
+      notifyListeners();
+      rethrow;
     }
   }
 

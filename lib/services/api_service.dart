@@ -122,6 +122,27 @@ class ApiService {
     }
   }
 
+  Future<Message> sendMessage(String recipient, String content, {String? attachmentUrl}) async {
+    final body = {
+      'recipient': recipient,
+      'content': content,
+    };
+    if (attachmentUrl != null) {
+      body['attachmentUrl'] = attachmentUrl;
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages/send'),
+      headers: _headers(),
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Message.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to send message: ${response.body}');
+    }
+  }
+
   Future<AttachmentUploadResponse> uploadAttachment(List<int> fileBytes, String fileName) async {
     final request = http.MultipartRequest(
       'POST',
