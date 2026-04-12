@@ -5,6 +5,23 @@ import '../models.dart';
 
 const String baseUrl = 'https://messenger.otaworkstation.shop/api';
 
+String resolveApiUrl(String urlOrPath) {
+  final parsed = Uri.tryParse(urlOrPath);
+  if (parsed != null && parsed.hasScheme) {
+    return urlOrPath;
+  }
+
+  final apiUri = Uri.parse(baseUrl);
+  final origin = '${apiUri.scheme}://${apiUri.authority}';
+  final normalized = urlOrPath.startsWith('/') ? urlOrPath : '/$urlOrPath';
+
+  if (normalized.startsWith('/api/')) {
+    return '$origin$normalized';
+  }
+
+  return '$baseUrl$normalized';
+}
+
 class ApiService {
   String? _token;
 

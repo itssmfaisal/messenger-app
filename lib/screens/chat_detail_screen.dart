@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models.dart';
 import '../providers.dart';
+import '../services/api_service.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String partner;
@@ -16,17 +17,52 @@ class ChatDetailScreen extends StatefulWidget {
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   late TextEditingController _messageController;
   late ScrollController _scrollController;
+  late Future<String?> _partnerAvatarFuture;
+
+  static const Color _pageBg = Color(0xFFF5F6F8);
+  static const Color _titleText = Color(0xFF1E2738);
+  static const Color _mutedText = Color(0xFF9AA3B2);
+  static const Color _incomingBubble = Color(0xFFEFF1F5);
+  static const Color _outgoingBubble = Color(0xFFE8E3FF);
+  static const Color _activeGreen = Color(0xFF4ED0AF);
 
   @override
   void initState() {
     super.initState();
     _messageController = TextEditingController();
     _scrollController = ScrollController();
+    _partnerAvatarFuture = _getPartnerAvatarUrl();
 
     // Load conversation
     Future.microtask(() {
+      if (!mounted) return;
       context.read<MessagesProvider>().loadConversation(widget.partner);
     });
+  }
+
+  Future<String?> _getPartnerAvatarUrl() async {
+    try {
+      final profile = await context.read<ApiService>().getUserProfile(widget.partner);
+      final path = profile.profilePictureUrl;
+      if (path == null || path.isEmpty) return null;
+      return resolveApiUrl(path);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isImageAttachment(Message message) {
+    final type = message.attachmentType?.toLowerCase();
+    if (type != null && type.startsWith('image/')) {
+      return true;
+    }
+
+    final source = (message.attachmentName ?? message.attachmentUrl ?? '').toLowerCase();
+    return source.endsWith('.jpg') ||
+        source.endsWith('.jpeg') ||
+        source.endsWith('.png') ||
+        source.endsWith('.gif') ||
+        source.endsWith('.webp');
   }
 
   @override
@@ -38,31 +74,101 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final presenceProvider = context.watch<PresenceProvider>();
+    final isOnline = presenceProvider.presenceStatus[widget.partner] ?? false;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.partner),
-            Consumer<PresenceProvider>(
-              builder: (context, presenceProvider, _) {
-                final isOnline = presenceProvider.presenceStatus[widget.partner] ?? false;
-                return Text(
-                  isOnline ? 'Online' : 'Offline',
-                  style: Theme.of(context).textTheme.bodySmall,
-                );
-              },
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.videocam), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.call), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
-      ),
+      backgroundColor: _pageBg,
       body: Column(
         children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    color: const Color(0xFF6D7688),
+                  ),
+                  FutureBuilder<String?>(
+                    future: _partnerAvatarFuture,
+                    builder: (context, snapshot) {
+                      final imageUrl = snapshot.data;
+                      return CircleAvatar(
+                        radius: 17,
+                        backgroundColor: const Color(0xFFD4DCE8),
+                        backgroundImage:
+                            imageUrl != null ? NetworkImage(imageUrl) : null,
+                        child: imageUrl == null
+                            ? Text(
+                                widget.partner.isNotEmpty
+                                    ? widget.partner[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Color(0xFF5A6679),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.partner,
+                        style: const TextStyle(
+                          color: _titleText,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        isOnline ? 'Online' : 'Offline',
+                        style: const TextStyle(
+                          color: _mutedText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: _activeGreen,
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                  child: const Text(
+                    'Messages',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'Media',
+                  style: TextStyle(
+                    color: _mutedText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Consumer<MessagesProvider>(
               builder: (context, messagesProvider, _) {
@@ -77,12 +183,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   );
                 }
 
-                // Reverse to show newest at bottom
                 final reversedMessages = messages.reversed.toList();
 
                 return ListView.builder(
                   controller: _scrollController,
-                  reverse: true,
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   itemCount: reversedMessages.length,
                   itemBuilder: (context, index) {
                     final message = reversedMessages[index];
@@ -92,38 +197,32 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               },
             ),
           ),
-          SingleChildScrollView(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.only(
+              left: 10,
+              right: 10,
+              bottom: 8,
+            ),
             child: Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade200),
-                ),
-              ),
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 8,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                color: const Color(0xFFEEF0F4),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {},
-                  ),
                   Expanded(
                     child: TextField(
                       controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                      decoration: const InputDecoration(
+                        hintText: 'Write your message...',
+                        hintStyle: TextStyle(color: _mutedText),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
                         ),
                       ),
                       minLines: 1,
@@ -131,11 +230,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      Icons.send,
-                      color: Theme.of(context).colorScheme.primary,
+                    icon: const Icon(Icons.attach_file_rounded),
+                    color: const Color(0xFF8E97A7),
+                    onPressed: () {},
+                  ),
+                  GestureDetector(
+                    onTap: _sendMessage,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF90E3CD),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                    onPressed: _sendMessage,
                   ),
                 ],
               ),
@@ -153,12 +266,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _messageController.clear();
     
     context.read<MessagesProvider>().sendMessage(widget.partner, content).then((_) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }).catchError((error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
       );
@@ -171,33 +289,76 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     return Align(
       alignment: isFromMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         child: Column(
           crossAxisAlignment:
               isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isFromMe ? 'You' : message.sender,
+                    style: const TextStyle(
+                      color: Color(0xFF697386),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    DateFormat.Hm().format(message.sentAt),
+                    style: const TextStyle(
+                      color: _mutedText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isFromMe
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(16),
+                color: isFromMe ? _outgoingBubble : _incomingBubble,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (message.attachmentUrl != null)
+                  if (message.attachmentUrl != null && _isImageAttachment(message))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          resolveApiUrl(message.attachmentUrl!),
+                          width: 170,
+                          height: 140,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 170,
+                            height: 140,
+                            color: const Color(0xFFDDE3EC),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image_outlined,
+                                color: Color(0xFF6B7689)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (message.attachmentUrl != null && !_isImageAttachment(message))
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color:
-                                isFromMe ? Colors.white30 : Colors.grey.shade400,
+                            color: const Color(0xFFC9D0DD),
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(9),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -205,14 +366,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             Icon(
                               Icons.attach_file,
                               size: 16,
-                              color: isFromMe ? Colors.white : Colors.black,
+                              color: const Color(0xFF4B5567),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               message.attachmentName ?? 'File',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
-                                color: isFromMe ? Colors.white : Colors.black,
+                                color: Color(0xFF4B5567),
                               ),
                             ),
                           ],
@@ -221,37 +382,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   Text(
                     message.content,
-                    style: TextStyle(
-                      color: isFromMe ? Colors.white : Colors.black,
+                    style: const TextStyle(
+                      color: Color(0xFF3D4656),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4, right: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    DateFormat.jm().format(message.sentAt),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (isFromMe) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      message.status == 'SEEN'
-                          ? Icons.done_all
-                          : Icons.done,
-                      size: 16,
-                      color: message.status == 'SEEN'
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey,
-                    ),
-                  ],
-                ],
+            if (isFromMe)
+              Padding(
+                padding: const EdgeInsets.only(top: 3, right: 4),
+                child: Icon(
+                  message.status == 'SEEN' ? Icons.done_all : Icons.done_all,
+                  size: 15,
+                  color: message.status == 'SEEN'
+                      ? const Color(0xFF53C6E2)
+                      : const Color(0xFFC4C9D5),
+                ),
               ),
-            ),
           ],
         ),
       ),

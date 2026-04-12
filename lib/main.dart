@@ -111,10 +111,14 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int _selectedIndex = 0;
 
+  static const Color _activeNav = Color(0xFF35BE86);
+  static const Color _inactiveNav = Color(0xFF6A7890);
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       context.read<MessagesProvider>().loadConversations();
     });
   }
@@ -130,19 +134,71 @@ class _MainAppState extends State<MainApp> {
     return Scaffold(
       body: screens[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        color: Colors.white,
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              _buildNavItem(
+                index: 0,
+                label: 'Chat',
+                icon: Icons.chat_bubble_outline_rounded,
+              ),
+              _buildNavItem(
+                index: 1,
+                label: 'Contacts',
+                icon: Icons.people_outline_rounded,
+              ),
+              _buildNavItem(
+                index: 2,
+                label: 'Profile',
+                icon: Icons.person_outline_rounded,
+              ),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-            BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Contacts'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required String label,
+    required IconData icon,
+  }) {
+    final isActive = _selectedIndex == index;
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => setState(() => _selectedIndex = index),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: isActive ? _activeNav : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isActive ? Colors.white : _inactiveNav,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive ? _activeNav : _inactiveNav,
+              ),
+            ),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers.dart';
+import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,6 +15,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _bioController;
   bool _isEditing = false;
 
+  String _resolveProfileImageUrl(String url) {
+    final parsed = Uri.tryParse(url);
+    if (parsed != null && parsed.hasScheme) {
+      return url;
+    }
+
+    final normalizedPath = url.startsWith('/') ? url : '/$url';
+    return '$baseUrl$normalizedPath';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -21,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _bioController = TextEditingController();
 
     Future.microtask(() {
+      if (!mounted) return;
       final profileProvider = context.read<ProfileProvider>();
       if (profileProvider.profile != null) {
         _displayNameController.text = profileProvider.profile!.displayName ?? '';
@@ -79,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       backgroundImage: profile.profilePictureUrl != null
                           ? NetworkImage(
-                              'https://messenger.otaworkstation.shop${profile.profilePictureUrl}',
+                              _resolveProfileImageUrl(profile.profilePictureUrl!),
                             )
                           : null,
                       child: profile.profilePictureUrl == null
@@ -294,6 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _displayNameController.text.isEmpty ? null : _displayNameController.text,
             _bioController.text.isEmpty ? null : _bioController.text,
           );
+      if (!mounted) return;
       setState(() => _isEditing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -302,6 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update profile: $e'),
