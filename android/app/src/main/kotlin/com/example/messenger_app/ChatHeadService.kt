@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
@@ -19,10 +20,12 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -64,6 +67,7 @@ class ChatHeadService : Service() {
     private var partner: String? = null
     private var currentUsername: String? = null
     private var messagesContainer: LinearLayout? = null
+    private var messagesScrollView: ScrollView? = null
     private var messageInput: EditText? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -248,16 +252,15 @@ class ChatHeadService : Service() {
 
     private fun showQuickPanel(label: String) {
         val wm = windowManager ?: return
-        val bubbleLayoutParams = bubbleParams ?: return
         val metrics = resources.displayMetrics
-        val panelWidth = (metrics.widthPixels - dp(20)).coerceAtLeast(dp(300))
-        val panelHeight = (metrics.heightPixels * 0.68f).toInt().coerceAtLeast(dp(360))
+        val panelWidth = metrics.widthPixels
+        val panelHeight = metrics.heightPixels
 
         val cardBackground = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(20).toFloat()
-            setColor(0xFFF8FAFF.toInt())
-            setStroke(dp(1), 0xFFDCE4F3.toInt())
+            cornerRadius = dp(18).toFloat()
+            setColor(0xFFF5F6F8.toInt())
+            setStroke(dp(1), 0xFFE3E8F2.toInt())
         }
 
         val title = TextView(this).apply {
@@ -268,7 +271,7 @@ class ChatHeadService : Service() {
         }
 
         val subtitle = TextView(this).apply {
-            text = "Quick reply bubble"
+            text = "Chat bubble"
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(0xFF72819A.toInt())
         }
@@ -292,6 +295,47 @@ class ChatHeadService : Service() {
             setOnClickListener { hideQuickPanel() }
         }
 
+        val messageIconBadge = ImageView(this).apply {
+            setImageResource(android.R.drawable.sym_action_chat)
+            setColorFilter(0xFFFFFFFF.toInt())
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x73000000)
+            }
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            layoutParams = LinearLayout.LayoutParams(dp(36), dp(36))
+        }
+
+        val receiverAvatarImage = ImageView(this).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0xFFE8EDF6.toInt())
+            }
+            layoutParams = FrameLayout.LayoutParams(dp(32), dp(32), Gravity.CENTER)
+            clipToOutline = true
+        }
+
+        val receiverAvatar = FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x73000000)
+            }
+            layoutParams = LinearLayout.LayoutParams(dp(36), dp(36))
+            addView(receiverAvatarImage)
+        }
+        loadPartnerAvatarInto(receiverAvatarImage)
+
+        val headerActions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(messageIconBadge)
+            addView(spacerWidth(8))
+            addView(receiverAvatar)
+            addView(spacerWidth(8))
+            addView(closeButton)
+        }
+
         val headerRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -299,12 +343,12 @@ class ChatHeadService : Service() {
                 header,
                 LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             )
-            addView(closeButton)
+            addView(headerActions)
         }
 
         messagesContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(4), dp(2), dp(4), dp(2))
+            setPadding(dp(6), dp(2), dp(6), dp(2))
         }
 
         val scrollView = ScrollView(this).apply {
@@ -314,7 +358,7 @@ class ChatHeadService : Service() {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(14).toFloat()
                 setColor(0xFFFFFFFF.toInt())
-                setStroke(dp(1), 0xFFE1E8F5.toInt())
+                setStroke(dp(1), 0xFFE7ECF6.toInt())
             }
             addView(
                 messagesContainer,
@@ -331,11 +375,12 @@ class ChatHeadService : Service() {
             setTextColor(0xFF1D2433.toInt())
             setHintTextColor(0xFF93A0B7.toInt())
             setPadding(dp(14), dp(10), dp(14), dp(10))
+            setSingleLine(true)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(14).toFloat()
-                setColor(0xFFFFFFFF.toInt())
-                setStroke(dp(1), 0xFFD4DFF2.toInt())
+                setColor(0xFFEEF0F4.toInt())
+                setStroke(dp(1), 0xFFDCE3EE.toInt())
             }
         }
 
@@ -348,8 +393,7 @@ class ChatHeadService : Service() {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(14).toFloat()
-                colors = intArrayOf(0xFF0F86FF.toInt(), 0xFF2167F3.toInt())
-                orientation = GradientDrawable.Orientation.LEFT_RIGHT
+                setColor(0xFF4ED0AF.toInt())
             }
             setOnClickListener {
                 val text = messageInput?.text?.toString()?.trim().orEmpty()
@@ -357,6 +401,17 @@ class ChatHeadService : Service() {
                     sendMessageAsync(text)
                     messageInput?.setText("")
                 }
+            }
+        }
+
+        messageInput?.setOnEditorActionListener { _, _, _ ->
+            val text = messageInput?.text?.toString()?.trim().orEmpty()
+            if (text.isNotEmpty()) {
+                sendMessageAsync(text)
+                messageInput?.setText("")
+                true
+            } else {
+                false
             }
         }
 
@@ -380,22 +435,56 @@ class ChatHeadService : Service() {
         val openAppButton = TextView(this).apply {
             text = "Open Full App"
             gravity = Gravity.CENTER
-            setTextColor(0xFF3258A8.toInt())
+            setTextColor(0xFF697386.toInt())
             setTypeface(typeface, Typeface.BOLD)
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(14).toFloat()
-                setColor(0xFFEAF0FF.toInt())
+                setColor(0xFFEDEFF3.toInt())
             }
             setOnClickListener { openFullApp() }
         }
 
-        val content = LinearLayout(this).apply {
+        val messagesTab = TextView(this).apply {
+            text = "Messages"
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setTextColor(0xFFFFFFFF.toInt())
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(dp(14), dp(7), dp(14), dp(7))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(18).toFloat()
+                setColor(0xFF4ED0AF.toInt())
+            }
+        }
+
+        val mediaTab = TextView(this).apply {
+            text = "Media"
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setTextColor(0xFF8B95A7.toInt())
+            setPadding(dp(10), dp(7), dp(10), dp(7))
+        }
+
+        val tabsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            addView(messagesTab)
+            addView(spacerWidth(8))
+            addView(mediaTab)
+        }
+
+        val basePaddingLeft = dp(14)
+        val basePaddingTop = dp(28)
+        val basePaddingRight = dp(14)
+        val basePaddingBottom = dp(10)
+
+        val bodyCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(14))
             background = cardBackground
-            addView(headerRow)
+            setPadding(dp(12), dp(12), dp(12), dp(10))
+            addView(tabsRow)
             addView(spacer(12))
             addView(
                 scrollView,
@@ -417,6 +506,25 @@ class ChatHeadService : Service() {
             )
         }
 
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(basePaddingLeft, basePaddingTop, basePaddingRight, basePaddingBottom)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(Color.TRANSPARENT)
+            }
+            addView(headerRow)
+            addView(spacer(10))
+            addView(
+                bodyCard,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    0,
+                    1f
+                )
+            )
+        }
+
         val root = FrameLayout(this).apply {
             addView(content)
         }
@@ -428,28 +536,99 @@ class ChatHeadService : Service() {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         )
+        params.softInputMode =
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
 
         params.gravity = Gravity.TOP or Gravity.START
-    params.x = dp(10)
-    params.y = (bubbleLayoutParams.y - (panelHeight / 3)).coerceAtLeast(dp(50))
-        clampPanelPosition(params)
-
-        root.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_OUTSIDE) {
-                hideQuickPanel()
-                true
-            } else {
-                false
+        params.x = 0
+        params.y = 0
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            root.setOnApplyWindowInsetsListener { _, insets ->
+                val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+                val systemBottom = insets.getInsets(WindowInsets.Type.systemBars()).bottom
+                val keyboardInset = (imeBottom - systemBottom).coerceAtLeast(0)
+                content.setPadding(
+                    basePaddingLeft,
+                    basePaddingTop,
+                    basePaddingRight,
+                    basePaddingBottom + keyboardInset
+                )
+                if (keyboardInset > 0) {
+                    scrollToLatestMessages()
+                }
+                insets
             }
         }
 
+        messagesScrollView = scrollView
         panelView = root
         wm.addView(root, params)
         loadMessagesAsync()
+    }
+
+    private fun loadPartnerAvatarInto(imageView: ImageView) {
+        val peer = partner ?: return
+        val token = resolveAuthToken() ?: return
+
+        Thread {
+            try {
+                val encodedPartner = URLEncoder.encode(peer, "UTF-8")
+                val profileUrl = URL("https://messenger.otaworkstation.shop/api/profile/$encodedPartner")
+                val profileConnection = (profileUrl.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    setRequestProperty("Authorization", "Bearer $token")
+                    setRequestProperty("Content-Type", "application/json")
+                    connectTimeout = 12000
+                    readTimeout = 12000
+                }
+
+                val profileBody = readStream(
+                    if (profileConnection.responseCode in 200..299) {
+                        profileConnection.inputStream
+                    } else {
+                        profileConnection.errorStream
+                    }
+                )
+                profileConnection.disconnect()
+
+                if (profileBody.isBlank()) return@Thread
+                val profileJson = JSONObject(profileBody)
+                val rawPath = profileJson.optString("profilePictureUrl", "")
+                if (rawPath.isBlank()) return@Thread
+
+                val resolvedPath = resolveApiUrl(rawPath)
+                val bitmapConnection = (URL(resolvedPath).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 12000
+                    readTimeout = 12000
+                }
+                val bitmap = bitmapConnection.inputStream.use { input ->
+                    BitmapFactory.decodeStream(input)
+                }
+                bitmapConnection.disconnect()
+
+                if (bitmap != null) {
+                    mainHandler.post {
+                        imageView.setImageBitmap(bitmap)
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }.start()
+    }
+
+    private fun resolveApiUrl(urlOrPath: String): String {
+        return if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+            urlOrPath
+        } else if (urlOrPath.startsWith("/api/")) {
+            "https://messenger.otaworkstation.shop$urlOrPath"
+        } else {
+            "https://messenger.otaworkstation.shop/api${if (urlOrPath.startsWith('/')) "" else "/"}$urlOrPath"
+        }
     }
 
     private fun hideQuickPanel() {
@@ -457,6 +636,7 @@ class ChatHeadService : Service() {
         panelView?.let { wm.removeView(it) }
         panelView = null
         messagesContainer = null
+        messagesScrollView = null
         messageInput = null
     }
 
@@ -517,7 +697,8 @@ class ChatHeadService : Service() {
                 }
 
                 val json = JSONObject(body)
-                val array = json.optJSONArray("content") ?: return@Thread
+                val page = json.optJSONObject("messages") ?: json
+                val array = page.optJSONArray("content") ?: return@Thread
                 val items = mutableListOf<Pair<String, String>>()
                 for (i in array.length() - 1 downTo 0) {
                     val item = array.getJSONObject(i)
@@ -827,6 +1008,14 @@ class ChatHeadService : Service() {
             container.addView(buildBubble(content, isMine))
             container.addView(spacer(6))
         }
+
+        scrollToLatestMessages()
+    }
+
+    private fun scrollToLatestMessages() {
+        messagesScrollView?.post {
+            messagesScrollView?.fullScroll(View.FOCUS_DOWN)
+        }
     }
 
     private fun postSystemMessage(text: String) {
@@ -846,13 +1035,13 @@ class ChatHeadService : Service() {
     private fun buildBubble(text: String, isMine: Boolean): View {
         val bubble = TextView(this).apply {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            setTextColor(if (isMine) 0xFFFFFFFF.toInt() else 0xFF1D2433.toInt())
+            setTextColor(0xFF3D4656.toInt())
             setPadding(dp(14), dp(10), dp(14), dp(10))
             this.text = text
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(14).toFloat()
-                setColor(if (isMine) 0xFF2167F3.toInt() else 0xFFEAF0FA.toInt())
+                setColor(if (isMine) 0xFFE8E3FF.toInt() else 0xFFEFF1F5.toInt())
             }
         }
 
