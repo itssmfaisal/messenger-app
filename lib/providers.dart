@@ -135,14 +135,19 @@ class MessagesProvider extends ChangeNotifier {
   String? _currentUsername;
 
   List<Conversation> _conversations = [];
-  Map<String, List<Message>> _conversationMessages = {};
-  Map<int, Message> _allMessages = {};
+  final Map<String, List<Message>> _conversationMessages = {};
+  final Map<int, Message> _allMessages = {};
+  final Map<String, String?> _userDisplayNames = {};
   bool _isLoading = false;
   String? _error;
 
   List<Conversation> get conversations => _conversations;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  String getDisplayName(String username) {
+    return _userDisplayNames[username] ?? username;
+  }
 
   MessagesProvider({required this.apiService});
 
@@ -200,6 +205,7 @@ class MessagesProvider extends ChangeNotifier {
     try {
       final result = await apiService.getConversations(page: page, size: size);
       _conversations = result.content;
+      _userDisplayNames.addAll(result.userNameDisplayNameMapping);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -216,6 +222,7 @@ class MessagesProvider extends ChangeNotifier {
 
     try {
       final result = await apiService.getConversation(withUser, page: page);
+      _userDisplayNames.addAll(result.userNameDisplayNameMapping);
       if (!_conversationMessages.containsKey(withUser)) {
         _conversationMessages[withUser] = [];
       }
@@ -363,7 +370,7 @@ class PresenceProvider extends ChangeNotifier {
   final ApiService apiService;
   WebSocketService? webSocketService;
 
-  Map<String, bool> _presenceStatus = {};
+  final Map<String, bool> _presenceStatus = {};
   bool _isLoading = false;
 
   Map<String, bool> get presenceStatus => _presenceStatus;

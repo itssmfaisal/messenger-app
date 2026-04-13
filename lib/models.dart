@@ -137,6 +137,7 @@ class ConversationPage {
   final int totalPages;
   final bool isLast;
   final bool isFirst;
+  final Map<String, String?> userNameDisplayNameMapping;
 
   ConversationPage({
     required this.content,
@@ -144,17 +145,25 @@ class ConversationPage {
     required this.totalPages,
     required this.isLast,
     required this.isFirst,
+    this.userNameDisplayNameMapping = const {},
   });
 
   factory ConversationPage.fromJson(Map<String, dynamic> json) {
+    final conversationsJson =
+        (json['conversations'] is Map<String, dynamic>)
+            ? json['conversations'] as Map<String, dynamic>
+            : json;
+    final mapping = _parseUserNameDisplayNameMapping(json);
+
     return ConversationPage(
-      content: (json['content'] as List)
+      content: (conversationsJson['content'] as List)
           .map((c) => Conversation.fromJson(c))
           .toList(),
-      totalElements: json['totalElements'],
-      totalPages: json['totalPages'],
-      isLast: json['last'] ?? true,
-      isFirst: json['first'] ?? true,
+      totalElements: conversationsJson['totalElements'],
+      totalPages: conversationsJson['totalPages'],
+      isLast: conversationsJson['last'] ?? true,
+      isFirst: conversationsJson['first'] ?? true,
+      userNameDisplayNameMapping: mapping,
     );
   }
 }
@@ -163,18 +172,49 @@ class MessagePage {
   final List<Message> content;
   final int totalElements;
   final int totalPages;
+  final Map<String, String?> userNameDisplayNameMapping;
 
   MessagePage({
     required this.content,
     required this.totalElements,
     required this.totalPages,
+    this.userNameDisplayNameMapping = const {},
   });
 
   factory MessagePage.fromJson(Map<String, dynamic> json) {
+    final messagesJson =
+        (json['messages'] is Map<String, dynamic>)
+            ? json['messages'] as Map<String, dynamic>
+            : json;
+    final mapping = _parseUserNameDisplayNameMapping(json);
+
     return MessagePage(
-      content: (json['content'] as List).map((m) => Message.fromJson(m)).toList(),
-      totalElements: json['totalElements'],
-      totalPages: json['totalPages'],
+      content:
+          (messagesJson['content'] as List).map((m) => Message.fromJson(m)).toList(),
+      totalElements: messagesJson['totalElements'],
+      totalPages: messagesJson['totalPages'],
+      userNameDisplayNameMapping: mapping,
     );
   }
+}
+
+Map<String, String?> _parseUserNameDisplayNameMapping(Map<String, dynamic> json) {
+  final rawMapping = json['userNameDisplayNameMapping'];
+  if (rawMapping is! List) {
+    return const {};
+  }
+
+  final parsed = <String, String?>{};
+  for (final item in rawMapping) {
+    if (item is! Map<String, dynamic>) continue;
+    final username = item['username'];
+    if (username is! String || username.isEmpty) continue;
+
+    final displayName = item['displayName'];
+    parsed[username] = displayName is String && displayName.trim().isNotEmpty
+        ? displayName.trim()
+        : null;
+  }
+
+  return parsed;
 }

@@ -51,7 +51,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final conversations = messagesProvider.conversations;
     final filtered = conversations.where((conversation) {
       if (_query.isEmpty) return true;
-      return conversation.partner.toLowerCase().contains(_query);
+      final username = conversation.partner.toLowerCase();
+      final displayName =
+          messagesProvider.getDisplayName(conversation.partner).toLowerCase();
+      return username.contains(_query) || displayName.contains(_query);
     }).toList();
 
     return Scaffold(
@@ -269,6 +272,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
         separatorBuilder: (_, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final conversation = heads[index];
+            final displayName =
+              context.read<MessagesProvider>().getDisplayName(conversation.partner);
           final isOnline =
               presenceProvider.presenceStatus[conversation.partner] ?? false;
 
@@ -302,7 +307,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 : null,
                             child: imageUrl == null
                                 ? Text(
-                                    conversation.partner[0].toUpperCase(),
+                                    displayName[0].toUpperCase(),
                                     style: const TextStyle(
                                       color: Color(0xFF556071),
                                       fontWeight: FontWeight.w700,
@@ -330,7 +335,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    conversation.partner,
+                    displayName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -368,6 +373,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
     BuildContext context,
     Conversation conversation,
   ) {
+    final displayName =
+        context.read<MessagesProvider>().getDisplayName(conversation.partner);
+
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
@@ -396,7 +404,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       : null,
                   child: imageUrl == null
                       ? Text(
-                          conversation.partner[0].toUpperCase(),
+                          displayName[0].toUpperCase(),
                           style: const TextStyle(
                             color: Color(0xFF556071),
                             fontWeight: FontWeight.w700,
@@ -409,7 +417,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                conversation.partner,
+                displayName,
                 style: const TextStyle(
                   color: _titleText,
                   fontSize: 17,
@@ -448,6 +456,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   void _showConversationActions(Conversation conversation) {
+    final displayName =
+        context.read<MessagesProvider>().getDisplayName(conversation.partner);
+
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -470,7 +481,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.chat_bubble_rounded),
-                title: Text('Open ${conversation.partner} as chat head'),
+                title: Text('Open $displayName as chat head'),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   _startChatHeadForPartner(conversation.partner);

@@ -74,6 +74,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final messagesProvider = context.watch<MessagesProvider>();
+    final partnerDisplayName = messagesProvider.getDisplayName(widget.partner);
     final presenceProvider = context.watch<PresenceProvider>();
     final isOnline = presenceProvider.presenceStatus[widget.partner] ?? false;
 
@@ -103,8 +105,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             imageUrl != null ? NetworkImage(imageUrl) : null,
                         child: imageUrl == null
                             ? Text(
-                                widget.partner.isNotEmpty
-                                    ? widget.partner[0].toUpperCase()
+                            partnerDisplayName.isNotEmpty
+                              ? partnerDisplayName[0].toUpperCase()
                                     : '?',
                                 style: const TextStyle(
                                   color: Color(0xFF5A6679),
@@ -120,7 +122,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.partner,
+                        partnerDisplayName,
                         style: const TextStyle(
                           color: _titleText,
                           fontWeight: FontWeight.w700,
@@ -300,7 +302,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isFromMe ? 'You' : message.sender,
+                    isFromMe
+                        ? 'You'
+                        : context.read<MessagesProvider>().getDisplayName(message.sender),
                     style: const TextStyle(
                       color: Color(0xFF697386),
                       fontSize: 13,
