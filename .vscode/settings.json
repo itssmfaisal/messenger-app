@@ -1,6 +1,7 @@
 {
-    "chat.tools.terminal.autoApprove": {
-        "flutter": true,
-        "nc": true
-    }
+  "chat.tools.terminal.autoApprove": {
+    "flutter": true,
+    "nc": true
+  },
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

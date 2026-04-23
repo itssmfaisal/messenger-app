@@ -45,7 +45,4 @@ app.*.map.json
 /android/app/release
 
 # Main branch codes
-/lib/screens
-/lib/services
-/lib/providers.dart
-/lib/models.dart
+temp/

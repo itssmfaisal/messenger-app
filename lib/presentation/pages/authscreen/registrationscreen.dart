@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:messenger_app/presentation/pages/main_wrapper/main_wrapper_page.dart';
-import 'package:messenger_app/screens/auth_screens.dart';
+import 'package:messenger_app/presentation/pages/authscreen/loginscreen.dart';
 
 class Registrationscreen extends StatelessWidget {
   const Registrationscreen({super.key});
