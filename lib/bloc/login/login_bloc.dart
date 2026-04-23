@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:messenger_app/bloc/login_event.dart';
-import 'package:messenger_app/bloc/login_state.dart';
+import 'package:messenger_app/bloc/login/login_event.dart';
+import 'package:messenger_app/bloc/login/login_state.dart';
 import 'package:messenger_app/data/models/sources/auth_service.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {

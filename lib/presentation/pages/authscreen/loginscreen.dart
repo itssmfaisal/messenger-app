@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:messenger_app/bloc/login_bloc.dart';
-import 'package:messenger_app/bloc/login_state.dart';
+import 'package:messenger_app/bloc/login/login_bloc.dart';
+import 'package:messenger_app/bloc/login/login_event.dart';
+import 'package:messenger_app/bloc/login/login_state.dart';
 import 'package:messenger_app/presentation/pages/authscreen/registrationscreen.dart';
 import 'package:messenger_app/presentation/pages/main_wrapper/main_wrapper_page.dart';
 
@@ -109,61 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         //_buildForgotPassword(),
                         const SizedBox(height: 24),
+
                         // Login Button with BLoC State
-                        Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFF005BC4,
-                                ).withValues(alpha: 0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF005BC4), Color(0xFF62A1FF)],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MainWrapperPage(),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Log In",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward, color: Colors.white),
-                              ],
-                            ),
-                          ),
-                        ),
-                        //_buildLoginButton(context, state),
+                        _buildLoginButton(context, state),
                         const SizedBox(height: 40),
                         const Row(
                           children: [
@@ -198,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        //_buildSocialButtons(),
+
                         const SizedBox(height: 40),
                         Center(
                           child: Row(
@@ -237,209 +186,68 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
-    //
-    // SafeArea(
-    //     child: SingleChildScrollView(
-    //       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-    //       child: Column(
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           const SizedBox(height: 20),
-    //           // Logo Header
-    //           Row(
-    //             children: [
-    //               Container(
-    //                 padding: const EdgeInsets.all(8),
-    //                 decoration: const BoxDecoration(
-    //                   color: Color(0xFF005BC4),
-    //                   shape: BoxShape.circle,
-    //                 ),
-    //                 child: const Icon(
-    //                   Icons.cloud,
-    //                   color: Colors.white,
-    //                   size: 24,
-    //                 ),
-    //               ),
-    //               const SizedBox(width: 10),
-    //               const Text(
-    //                 "Cirrus Blue",
-    //                 style: TextStyle(
-    //                   color: Color(0xFF005BC4),
-    //                   fontSize: 18,
-    //                   fontWeight: FontWeight.bold,
-    //                 ),
-    //               ),
-    //             ],
-    //           ),
-    //           const SizedBox(height: 60),
-    //           // Welcome Text
-    //           const Center(
-    //             child: Column(
-    //               children: [
-    //                 Text(
-    //                   "Welcome back",
-    //                   style: TextStyle(
-    //                     fontSize: 32,
-    //                     fontWeight: FontWeight.w800,
-    //                     color: Color(0xFF1A1C1E),
-    //                   ),
-    //                 ),
-    //                 SizedBox(height: 12),
-    //                 Text(
-    //                   "The conversation is waiting for you.\nDive back into Cirrus Blue.",
-    //                   textAlign: TextAlign.center,
-    //                   style: TextStyle(
-    //                     fontSize: 16,
-    //                     color: Colors.black54,
-    //                     height: 1.5,
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           const SizedBox(height: 40),
-    //           // Email Field
-    //           _buildTextField(
-    //             hintText: "Email or phone number",
-    //             icon: Icons.alternate_email,
-    //           ),
-    //           const SizedBox(height: 16),
-    //           // Password Field
-    //           _buildTextField(
-    //             hintText: "Password",
-    //             icon: Icons.lock_outline,
-    //             isPassword: true,
-    //           ),
-    //           const SizedBox(height: 12),
-    //           // Forgot Password
-    //           Align(
-    //             alignment: Alignment.centerRight,
-    //             child: TextButton(
-    //               onPressed: () {},
-    //               child: const Text(
-    //                 "Forgot Password?",
-    //                 style: TextStyle(
-    //                   color: Color(0xFF005BC4),
-    //                   fontWeight: FontWeight.bold,
-    //                 ),
-    //               ),
-    //             ),
-    //           ),
-    //           const SizedBox(height: 24),
-    //           // Login Button with Gradient
-    //           Container(
-    //             width: double.infinity,
-    //             height: 56,
-    //             decoration: BoxDecoration(
-    //               borderRadius: BorderRadius.circular(28),
-    //               boxShadow: [
-    //                 BoxShadow(
-    //                   color: const Color(0xFF005BC4).withValues(alpha: 0.3),
-    //                   blurRadius: 10,
-    //                   offset: const Offset(0, 4),
-    //                 ),
-    //               ],
-    //               gradient: const LinearGradient(
-    //                 colors: [Color(0xFF005BC4), Color(0xFF62A1FF)],
-    //                 begin: Alignment.centerLeft,
-    //                 end: Alignment.centerRight,
-    //               ),
-    //             ),
-    //             child: ElevatedButton(
-    //               onPressed: () {
-    //                 Navigator.push(
-    //                   context,
-    //                   MaterialPageRoute(
-    //                     builder: (context) => MainWrapperPage(),
-    //                   ),
-    //                 );
-    //               },
-    //               style: ElevatedButton.styleFrom(
-    //                 backgroundColor: Colors.transparent,
-    //                 shadowColor: Colors.transparent,
-    //                 shape: RoundedRectangleBorder(
-    //                   borderRadius: BorderRadius.circular(28),
-    //                 ),
-    //               ),
-    //               child: const Row(
-    //                 mainAxisAlignment: MainAxisAlignment.center,
-    //                 children: [
-    //                   Text(
-    //                     "Log In",
-    //                     style: TextStyle(
-    //                       fontSize: 18,
-    //                       color: Colors.white,
-    //                       fontWeight: FontWeight.bold,
-    //                     ),
-    //                   ),
-    //                   SizedBox(width: 8),
-    //                   Icon(Icons.arrow_forward, color: Colors.white),
-    //                 ],
-    //               ),
-    //             ),
-    //           ),
-    //           const SizedBox(height: 40),
-    //           // Divider
-    //           const Row(
-    //             children: [
-    //               Expanded(child: Divider()),
-    //               Padding(
-    //                 padding: EdgeInsets.symmetric(horizontal: 16),
-    //                 child: Text(
-    //                   "OR CONTINUE WITH",
-    //                   style: TextStyle(
-    //                     color: Colors.grey,
-    //                     fontSize: 12,
-    //                     fontWeight: FontWeight.bold,
-    //                   ),
-    //                 ),
-    //               ),
-    //               Expanded(child: Divider()),
-    //             ],
-    //           ),
-    //           const SizedBox(height: 30),
-    //           // Social Buttons
-    //           Row(
-    //             children: [
-    //               Expanded(
-    //                 child: _buildSocialButton("Google", Icons.g_mobiledata),
-    //               ),
-    //               const SizedBox(width: 16),
-    //               Expanded(child: _buildSocialButton("Apple", Icons.apple)),
-    //             ],
-    //           ),
-    //           const SizedBox(height: 40),
-    //           // Create Account
-    //           Center(
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: [
-    //                 const Text("New to the conversation? "),
-    //                 GestureDetector(
-    //                   onTap: () {
-    //                     Navigator.push(
-    //                       context,
-    //                       MaterialPageRoute(
-    //                         builder: (context) => Registrationscreen(),
-    //                       ),
-    //                     );
-    //                   },
-    //                   child: const Text(
-    //                     "Create an account",
-    //                     style: TextStyle(
-    //                       color: Color(0xFF005BC4),
-    //                       fontWeight: FontWeight.bold,
-    //                     ),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
-    // );
+  }
+
+  Widget _buildLoginButton(BuildContext context, LoginState state) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF005BC4).withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF005BC4), Color(0xFF62A1FF)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: ElevatedButton(
+        onPressed: state is LoginLoading
+            ? null // Disable button while loading
+            : () {
+                context.read<LoginBloc>().add(
+                  LoginSubmitted(_unameController.text, _passController.text),
+                );
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+        ),
+        child: state is LoginLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Log In",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, color: Colors.white),
+                ],
+              ),
+      ),
+    );
   }
 
   Widget _buildTextField({
