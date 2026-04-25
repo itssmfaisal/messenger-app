@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:messenger_app/presentation/profile_screen.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 // Import your actual screen files here
 // import 'package:your_app/presentation/pages/message/message_screen.dart';
@@ -32,9 +33,7 @@ class _MainWrapperPageState extends State<MainWrapperPage> {
       ), // Replace with MessageScreen()
       const Center(child: Text("Calls Screen")), // Replace with CallsScreen()
       const Center(child: Text("Feed Screen")), // Replace with FeedScreen()
-      const Center(
-        child: Text("Profile Screen"),
-      ), // Replace with ProfileScreen()
+      const ProfileScreen(), // Replace with ProfileScreen()
     ];
   }
 

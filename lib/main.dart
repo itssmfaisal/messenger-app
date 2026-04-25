@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:messenger_app/bloc/login/login_bloc.dart';
+import 'package:messenger_app/bloc/profile/profile_bloc.dart';
 import 'package:messenger_app/bloc/registration/registration_bloc.dart';
 import 'package:messenger_app/data/models/sources/auth_service.dart';
 import 'package:messenger_app/presentation/pages/authscreen/loginscreen.dart';
@@ -21,6 +22,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<LoginBloc>(create: (context) => LoginBloc(authService)),
         BlocProvider<RegistrationBloc>(
           create: (context) => RegistrationBloc(authService),
+        ),
+        BlocProvider<ProfileBloc>(
+          create: (context) => ProfileBloc(authService),
         ),
       ],
       child: MaterialApp(

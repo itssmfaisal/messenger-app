@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
   final String baseUrl =
       "https://messenger.otaworkstation.shop/api"; // Replace with your server IP for physical devices
+  final _storage = const FlutterSecureStorage();
 
   // 1. Register Functionality
   Future<Map<String, dynamic>> register(
@@ -40,11 +42,65 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['token']; // Returns the JWT token
+      String token = data['token'];
+      await _storage.write(key: 'jwt_token', value: token);
+      return token; // Returns the JWT token
     } else if (response.statusCode == 401) {
       throw Exception("Invalid credentials");
     } else {
       throw Exception("Server error: ${response.statusCode}");
     }
+  }
+
+  // 3. Profile Functionality
+  Future<Map<String, dynamic>> getProfile() async {
+    // 1. Get the token (usually from Secure Storage or a shared variable)
+    String? token = await _getToken();
+    //print(token);
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/profile'), // Standard endpoint for profile
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Passing the JWT
+      },
+    );
+    await getChatList();
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      token = data['token'];
+      return data;
+    } else {
+      throw Exception("Failed to load profile data");
+    }
+  }
+
+  // List of Conversation
+  Future<Map<String, dynamic>> getChatList() async {
+    // 1. Get the token (usually from Secure Storage or a shared variable)
+    String? token = await _getToken();
+    //print(token);
+
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/messages/conversations?page=0&size=20',
+      ), // Standard endpoint for profile
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Passing the JWT
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print(data);
+      return data;
+    } else {
+      throw Exception("Failed to load chat list");
+    }
+  }
+
+  Future<String?> _getToken() async {
+    return await _storage.read(key: 'jwt_token');
   }
 }
