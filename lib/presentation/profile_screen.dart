@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:messenger_app/bloc/authbloc/auth_bloc.dart';
+import 'package:messenger_app/bloc/authbloc/auth_event.dart';
 import 'package:messenger_app/bloc/profile/profile_bloc.dart';
 import 'package:messenger_app/bloc/profile/profile_event.dart';
 import 'package:messenger_app/bloc/profile/profile_state.dart';
@@ -30,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
             // Show the Facebook-style shimmer animation here
             return const ProfileSkeleton();
           } else if (state is ProfileLoaded) {
-            return _buildProfileContent(state.userData);
+            return _buildProfileContent(state.userData, context);
           } else if (state is ProfileError) {
             return Center(
               child: Column(
@@ -52,7 +54,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileContent(Map<String, dynamic> data) {
+  Widget _buildProfileContent(Map<String, dynamic> data, BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -79,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
           _buildInfoTile(Icons.phone, "Phone", "Not provided"),
           _buildInfoTile(Icons.location_on, "Location", "Bangladesh"), //
           const SizedBox(height: 40),
-          _buildLogoutButton(),
+          _buildLogoutButton(context),
         ],
       ),
     );
@@ -112,12 +114,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         onPressed: () {
           /* Handle Logout */
+          _showLogoutDialog(context);
         },
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red,
@@ -134,4 +137,28 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showLogoutDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (innerContext) => AlertDialog(
+      title: const Text('Logout'),
+      content: const Text('Are you sure you want to log out?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(innerContext),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(innerContext);
+
+            context.read<AuthBloc>().add(LoggedOut());
+          },
+          child: const Text('Logout', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
 }

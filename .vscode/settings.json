@@ -3,5 +3,6 @@
     "flutter": true,
     "nc": true
   },
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "dart.flutterSdkPath": ".fvm/versions/3.19.0"
 }

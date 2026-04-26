@@ -7,7 +7,7 @@ class AuthService {
       "https://messenger.otaworkstation.shop/api"; // Replace with your server IP for physical devices
   final _storage = const FlutterSecureStorage();
 
-  // 1. Register Functionality
+  // Register Functionality
   Future<Map<String, dynamic>> register(
     String username,
     String email,
@@ -32,7 +32,7 @@ class AuthService {
     }
   }
 
-  // 2. Login Functionality
+  // Login Functionality
   Future<String> login(String username, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
@@ -52,10 +52,10 @@ class AuthService {
     }
   }
 
-  // 3. Profile Functionality
+  // Profile Functionality
   Future<Map<String, dynamic>> getProfile() async {
     // 1. Get the token (usually from Secure Storage or a shared variable)
-    String? token = await _getToken();
+    String? token = await getToken();
     //print(token);
 
     final response = await http.get(
@@ -75,10 +75,16 @@ class AuthService {
     }
   }
 
+  // Logout Functionality
+  Future<void> logout() async {
+    // Delete the JWT
+    await _storage.delete(key: 'jwt_token');
+  }
+
   // List of Conversation
   Future<Map<String, dynamic>> getChatList() async {
     // 1. Get the token (usually from Secure Storage or a shared variable)
-    String? token = await _getToken();
+    String? token = await getToken();
     //print(token);
 
     final response = await http.get(
@@ -100,7 +106,7 @@ class AuthService {
     }
   }
 
-  Future<String?> _getToken() async {
+  Future<String?> getToken() async {
     return await _storage.read(key: 'jwt_token');
   }
 }
