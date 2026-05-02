@@ -4,6 +4,7 @@ class AppConstants {
   AppConstants._();
 
   static const String apiBaseUrl = 'https://messenger.otaworkstation.shop/api';
+  static const String wsBaseUrl = 'wss://messenger.otaworkstation.shop/ws';
   static const String tokenKey = 'jwt_token';
 
   static const double borderRadiusLarge = 28.0;

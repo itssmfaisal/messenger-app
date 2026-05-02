@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:messenger_app/bloc/authbloc/auth_bloc.dart';
+import 'package:messenger_app/bloc/authbloc/auth_event.dart';
 import 'package:messenger_app/bloc/login/login_bloc.dart';
 import 'package:messenger_app/bloc/login/login_event.dart';
 import 'package:messenger_app/bloc/login/login_state.dart';
 import 'package:messenger_app/core/app_colors.dart';
 import 'package:messenger_app/core/app_constants.dart';
 import 'package:messenger_app/core/app_text_styles.dart';
-import 'package:messenger_app/presentation/pages/main_wrapper/main_wrapper_page.dart';
 import 'package:messenger_app/presentation/pages/authscreen/registration_screen.dart';
 import 'package:messenger_app/presentation/widgets/app_brand_header.dart';
 import 'package:messenger_app/presentation/widgets/app_text_field.dart';
@@ -39,10 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainWrapperPage()),
-            );
+            context.read<AuthBloc>().add(LoggedIn());
           } else if (state is LoginError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
