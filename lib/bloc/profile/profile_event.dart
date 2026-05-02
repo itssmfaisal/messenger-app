@@ -1,3 +1,10 @@
-abstract class ProfileEvent {}
+import 'package:equatable/equatable.dart';
 
-class LoadProfile extends ProfileEvent {}
+sealed class ProfileEvent extends Equatable {
+  const ProfileEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+final class LoadProfile extends ProfileEvent {}

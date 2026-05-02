@@ -1,15 +1,31 @@
-abstract class ProfileState {}
+import 'package:equatable/equatable.dart';
+import 'package:messenger_app/data/models/profile.dart';
 
-class ProfileInitial extends ProfileState {}
+sealed class ProfileState extends Equatable {
+  const ProfileState();
 
-class ProfileLoading extends ProfileState {}
-
-class ProfileLoaded extends ProfileState {
-  final Map<String, dynamic> userData;
-  ProfileLoaded(this.userData);
+  @override
+  List<Object?> get props => [];
 }
 
-class ProfileError extends ProfileState {
+final class ProfileInitial extends ProfileState {}
+
+final class ProfileLoading extends ProfileState {}
+
+final class ProfileLoaded extends ProfileState {
+  final Profile profile;
+
+  const ProfileLoaded(this.profile);
+
+  @override
+  List<Object?> get props => [profile];
+}
+
+final class ProfileError extends ProfileState {
   final String message;
-  ProfileError(this.message);
+
+  const ProfileError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

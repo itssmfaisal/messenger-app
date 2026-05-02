@@ -1,7 +1,14 @@
-abstract class AuthState {}
+import 'package:equatable/equatable.dart';
 
-class AuthInitial extends AuthState {}
+sealed class AuthState extends Equatable {
+  const AuthState();
 
-class Authenticated extends AuthState {}
+  @override
+  List<Object?> get props => [];
+}
 
-class Unauthenticated extends AuthState {}
+final class AuthInitial extends AuthState {}
+
+final class Authenticated extends AuthState {}
+
+final class Unauthenticated extends AuthState {}

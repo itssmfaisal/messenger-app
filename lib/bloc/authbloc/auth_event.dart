@@ -1,7 +1,14 @@
-abstract class AuthEvent {}
+import 'package:equatable/equatable.dart';
 
-class AppStarted extends AuthEvent {} // triggered on main.dart load
+sealed class AuthEvent extends Equatable {
+  const AuthEvent();
 
-class LoggedIn extends AuthEvent {}
+  @override
+  List<Object?> get props => [];
+}
 
-class LoggedOut extends AuthEvent {}
+final class AppStarted extends AuthEvent {}
+
+final class LoggedIn extends AuthEvent {}
+
+final class LoggedOut extends AuthEvent {}

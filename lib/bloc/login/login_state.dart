@@ -1,15 +1,30 @@
-abstract class LoginState {}
+import 'package:equatable/equatable.dart';
 
-class LoginInitial extends LoginState {}
+sealed class LoginState extends Equatable {
+  const LoginState();
 
-class LoginLoading extends LoginState {}
-
-class LoginSuccess extends LoginState {
-  final String token;
-  LoginSuccess(this.token);
+  @override
+  List<Object?> get props => [];
 }
 
-class LoginError extends LoginState {
+final class LoginInitial extends LoginState {}
+
+final class LoginLoading extends LoginState {}
+
+final class LoginSuccess extends LoginState {
+  final String token;
+
+  const LoginSuccess(this.token);
+
+  @override
+  List<Object?> get props => [token];
+}
+
+final class LoginError extends LoginState {
   final String message;
-  LoginError(this.message);
+
+  const LoginError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }
